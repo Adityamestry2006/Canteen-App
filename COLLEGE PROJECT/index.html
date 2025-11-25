@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Canteen — Food Morphing Demo (Firebase)</title>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-white text-gray-800">
+
+  <!-- Background Morph (visual) -->
+  <div id="bg-morph-wrapper" class="fixed inset-0 -z-10 pointer-events-none">
+    <svg id="bg-morph" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" class="w-full h-full">
+      <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#fff6ee" /><stop offset="1" stop-color="#fff1e0" /></linearGradient></defs>
+      <path id="bgShape" fill="url(#g1)" d="M0,300 Q200,200 400,300 T800,300 L800,600 L0,600 Z"></path>
+    </svg>
+  </div>
+
+  <!-- Header -->
+  <header class="w-full bg-orange-500 text-white p-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div id="morph-icon" class="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
+        <svg id="iconSvg" width="36" height="36" viewBox="0 0 64 64" fill="none"><path id="iconPath" fill="#fff" d="M16 32c0 8.837 7.163 16 16 16s16-7.163 16-16S40.837 16 32 16 16 23.163 16 32z" /></svg>
+      </div>
+      <h1 class="text-xl font-semibold">Campus Canteen</h1>
+      <div id="profileSummary" class="ml-4 text-sm hidden"></div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="loginBtn" class="px-3 py-1 rounded bg-white/30">Login</button>
+      <button id="signupBtn" class="px-3 py-1 rounded bg-white/20">Sign Up</button>
+      <button id="studentPanelBtn" class="px-3 py-1 rounded bg-white/20 hidden">Student Panel</button>
+      <button id="facultyPanelBtn" class="px-3 py-1 rounded bg-white/20 hidden">Faculty Panel</button>
+      <button id="adminPanelBtn" class="px-3 py-1 rounded bg-white/20 hidden">Admin Panel</button>
+      <button id="cartBtn" class="px-3 py-1 rounded bg-white/20 relative">
+        Cart
+        <span id="cartCount" class="ml-2 bg-red-600 text-white rounded-full w-5 h-5 text-xs text-center inline-flex items-center justify-center">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Category Navigation / Search / Veg toggle -->
+  <div id="categoryBar" class="category-bar">
+    <div class="left-group">
+      <button class="cat active" data-cat="all">All</button>
+      <button class="cat" data-cat="breakfast">🥐 Breakfast</button>
+      <button class="cat" data-cat="lunch">🍛 Lunch</button>
+      <button class="cat" data-cat="snacks">🍔 Snacks</button>
+      <button class="cat" data-cat="drinks">☕ Drinks</button>
+      <button class="cat" data-cat="special">🍕 Specials</button>
+    </div>
+
+    <div class="right-group">
+      <input id="searchInput" placeholder="Search menu..." class="cat-search" />
+      <button id="vegFilter" class="cat">All</button>
+    </div>
+  </div>
+
+  <!-- MAIN Layout -->
+  <main class="container mx-auto p-4 lg:p-8 grid lg:grid-cols-3 gap-6">
+
+    <!-- Left: Menu -->
+    <section class="lg:col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold text-orange-600">Today's Menu</h2>
+        <div id="newLaunchBadge" class="text-sm text-white bg-orange-500 px-3 py-1 rounded hidden">🔥 New Launches</div>
+      </div>
+
+      <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- Right: Cart -->
+    <aside class="bg-white rounded-lg shadow p-4 h-fit sticky top-6">
+      <h3 class="font-semibold text-lg mb-3">Your Order</h3>
+      <ul id="cartList" class="space-y-2 mb-4"></ul>
+
+      <div class="flex justify-between items-center mb-3">
+        <strong>Total</strong>
+        <div id="cartTotal" class="text-orange-600 font-bold">₹0.00</div>
+      </div>
+
+      <div class="flex gap-2 mb-3">
+        <button id="payCash" class="w-1/2 py-2 border rounded">Cash</button>
+        <button id="payOnline" class="w-1/2 py-2 border rounded">UPI</button>
+      </div>
+
+      <button id="placeOrder" class="w-full py-2 bg-orange-500 text-white rounded-lg">Place Order</button>
+
+      <div id="ordersList" class="mt-4"></div>
+    </aside>
+
+  </main>
+
+  <!-- Login / Signup Modal -->
+  <div id="authModal" class="login-overlay" aria-hidden="true" data-modal>
+    <div class="login-wrapper">
+      <div class="ring"><div class="circle"></div><div class="circle"></div><div class="circle"></div></div>
+      <div class="login-box">
+        <button id="authClose" class="close-btn" aria-label="close auth">✖</button>
+        <h2 id="authTitle" class="login-title">Login</h2>
+
+        <input id="authUser" placeholder="Email" class="login-input" />
+        <input id="authPass" placeholder="Password" type="password" class="login-input" />
+        <input id="authCollege" placeholder="College name (visible on profile)" class="login-input hidden" />
+        <input id="authPhone" placeholder="Mobile number" class="login-input hidden" />
+
+        <div class="flex gap-2 mt-2">
+          <button id="authSubmit" class="login-btn flex-1">LOGIN</button>
+          <button id="toggleAuth" class="login-btn bg-white text-orange-600 border border-orange-600">Sign Up</button>
+        </div>
+        <p id="authNote" class="login-sub mt-3 text-gray-600">Use Student email to sign up</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Summary / Cancel modal -->
+  <div id="orderModal" class="login-overlay" aria-hidden="true" data-modal>
+    <div class="login-wrapper">
+      <div class="login-box">
+        <button id="orderClose" class="close-btn" aria-label="close order">✖</button>
+        <h2 class="login-title">Order Summary</h2>
+        <div id="orderSummary"></div>
+
+        <!-- Faculty Room Input -->
+        <input id="facultyRoomInput" placeholder="Enter Room Number for Delivery" class="login-input hidden mt-3" />
+
+        <div class="mt-4 flex gap-2">
+          <button id="confirmOrderBtn" class="login-btn flex-1">Confirm</button>
+          <button id="cancelOrderBtn" class="login-btn bg-white text-orange-600 border border-orange-600">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Panel -->
+  <div id="studentPanel" class="login-overlay" aria-hidden="true" data-modal>
+    <div class="login-wrapper">
+      <div class="login-box">
+        <button id="studentClose" class="close-btn">✖</button>
+        <h2 class="login-title">Student Panel</h2>
+        <div id="studentInfo" class="text-left space-y-2 mt-2"></div>
+        <h3 class="mt-4">Recent Orders</h3>
+        <div id="studentOrders" class="mt-2"></div>
+        <div class="mt-4"><button id="logoutBtn" class="login-btn w-full">Logout</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Faculty Panel -->
+  <div id="facultyPanel" class="login-overlay" aria-hidden="true" data-modal>
+    <div class="login-wrapper">
+      <div class="login-box">
+        <button id="facultyClose" class="close-btn">✖</button>
+        <h2 class="login-title">Faculty Panel</h2>
+        <div id="facultyInfo" class="text-left space-y-2 mt-2"></div>
+
+        <div class="mt-3 flex items-center gap-3">
+          <label class="flex items-center gap-2"><input id="requireRoomToggle" type="checkbox" /> Require Room Delivery?</label>
+        </div>
+
+        <h3 class="mt-4">Orders to Manage</h3>
+        <div id="facultyOrders" class="mt-2"></div>
+        <div class="mt-4"><button id="logoutFacultyBtn" class="login-btn w-full">Logout</button></div>
+      </div>
+    </div>
+  </div>
+
+ <!-- ADMIN PANEL (fixed full layout) -->
+<div id="adminPanel" class="login-overlay" data-modal-admin>
+  <div class="login-wrapper admin-wrapper">
+    <div class="login-box admin-box">
+
+      <!-- Sidebar -->
+      <div class="admin-sidebar">
+        <h3 class="font-bold text-orange-600 text-lg">Admin Panel</h3>
+
+        <nav class="mt-4 space-y-2">
+          <button class="admin-nav active" data-view="dashboard">Dashboard</button>
+          <button class="admin-nav" data-view="orders">Orders</button>
+          <button class="admin-nav" data-view="menu">Menu Management</button>
+          <button class="admin-nav" data-view="transactions">Transactions</button>
+          <button class="admin-nav" data-view="settings">Settings</button>
+        </nav>
+
+        <button id="adminClose" class="login-btn mt-8">Close</button>
+      </div>
+
+      <!-- Content Area -->
+      <div class="admin-content">
+
+        <!-- Dashboard -->
+        <div id="adminView_dashboard" class="admin-view">
+          <h2 class="text-xl font-bold mb-4">Dashboard Overview</h2>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 bg-white rounded shadow">
+              <div class="text-sm text-gray-600">Total Orders</div>
+              <div id="admin_totalOrders" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="p-4 bg-white rounded shadow">
+              <div class="text-sm text-gray-600">Earnings Today</div>
+              <div id="admin_earnings" class="text-2xl font-bold">₹0</div>
+              <div id="admin_earnings_breakdown" class="text-xs text-gray-500"></div>
+            </div>
+            <div class="p-4 bg-white rounded shadow">
+              <div class="text-sm text-gray-600">Pending Orders</div>
+              <div id="admin_pending" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="p-4 bg-white rounded shadow">
+              <div class="text-sm text-gray-600">Completed Orders</div>
+              <div id="admin_completed" class="text-2xl font-bold">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Orders -->
+        <div id="adminView_orders" class="admin-view hidden">
+          <h2 class="text-xl font-bold">Orders</h2>
+          <input id="admin_orderSearch" placeholder="Search orders..." class="login-input mt-3" />
+          <div id="admin_ordersList" class="mt-4 space-y-3"></div>
+        </div>
+
+        <!-- Menu -->
+        <div id="adminView_menu" class="admin-view hidden">
+          <h2 class="text-xl font-bold">Menu Management</h2>
+          <div class="flex gap-2 mt-3">
+            <input id="admin_newName" placeholder="Name" class="login-input" />
+            <input id="admin_newPrice" placeholder="Price" class="login-input" />
+            <select id="admin_newCat" class="login-input">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="snacks">Snacks</option>
+              <option value="drinks">Drinks</option>
+              <option value="special">Special</option>
+            </select>
+            <button id="admin_addItem" class="login-btn">Add</button>
+          </div>
+          <div id="admin_menuList" class="mt-4 space-y-2"></div>
+        </div>
+
+        <!-- Transactions -->
+        <div id="adminView_transactions" class="admin-view hidden">
+          <h2 class="text-xl font-bold">Daily Transactions</h2>
+          <div id="admin_transactionsList" class="mt-4 space-y-3"></div>
+        </div>
+
+        <!-- Settings -->
+        <div id="adminView_settings" class="admin-view hidden">
+          <h2 class="text-xl font-bold">Settings</h2>
+          <p class="text-gray-600 mt-2">Manage system preferences here.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- CART SIDEBAR -->
+  <div id="cartSidebar" class="fixed top-0 -right-96 w-80 h-full bg-white shadow-lg transition-all duration-500 p-4 z-50">
+    <h2 class="text-xl font-bold text-orange-600 flex justify-between">
+      Your Cart <span id="closeCart" class="cursor-pointer text-red-500 text-lg">✖</span>
+    </h2>
+    <div id="cartItems" class="mt-4 space-y-3"></div>
+    <div class="mt-4 border-t pt-3">
+      <p class="font-semibold text-lg">Total: ₹<span id="cartTotal">0</span></p>
+      <button id="checkoutBtn" class="mt-3 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition">Checkout</button>
+    </div>
+  </div>
+
+  <!-- Firestore uses module; load script as module -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>

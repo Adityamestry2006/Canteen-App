@@ -1,0 +1,229 @@
+:root{
+  --orange:#ff7b00;
+  --bg:#fff8f3;
+  --muted:#6b6b6b;
+}
+
+html,body{height:100%;}
+body{
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  margin:0;
+  color:#222;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Background morph area (soft, behind content) */
+#bg-morph-wrapper{ z-index:-1; position:fixed; inset:0; opacity:0.95; }
+#bgShape{ transition: d 400ms ease; }
+
+/* Header */
+header{ box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+#iconSvg { transition: transform 300ms ease; }
+
+/* Menu cards */
+.menu-card{
+  background: white;
+  border-radius:12px;
+  padding:14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:8px;
+  transform-origin:center;
+  transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s;
+}
+.menu-card:hover{
+  transform: translateY(-6px) scale(1.03) rotate(-1deg);
+  box-shadow:0 18px 40px rgba(255,120,0,0.12);
+}
+
+/* Appearance inside card */
+.menu-card .meta{ display:flex; gap:10px; align-items:center; }
+.menu-card .meta img{ width:56px; height:56px; border-radius:8px; object-fit:cover; }
+
+/* Veg / Non-veg pill */
+.pill {
+  display:inline-block;
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:999px;
+  font-weight:600;
+}
+
+/* Add button small morph target */
+.add-btn{
+  background: linear-gradient(90deg,var(--orange),#ff9a3b);
+  color:white;
+  border:none;
+  padding:8px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* Cart button pop */
+#cartBtn{ position:relative; }
+
+/* FULLSCREEN LOGIN (reused) */
+.login-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  backdrop-filter:blur(6px);
+  display:none; /* default hidden; JS toggles via .open */
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+/* Visible overlay state used by JS */
+.login-overlay.open { display:flex; }
+
+/* Layout container */
+.login-wrapper{
+  position:relative;
+  width:340px;
+  height:420px;
+}
+
+/* Rotating rings (decorative) */
+.ring{ position:absolute; width:100%; height:100%; display:flex; justify-content:center; align-items:center; }
+.circle{ position:absolute; border:8px solid #ffb873; border-radius:50%; width:260px; height:260px; border-top-color:#ff7b00; animation:rotate 2.8s linear infinite; }
+.circle:nth-child(2){ width:290px; height:290px; border-color:#ffe0c4; animation-duration:4s; }
+.circle:nth-child(3){ width:320px; height:320px; border-color:#ffd7ab; animation-duration:6s; opacity:.7; }
+
+@keyframes rotate{ from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+
+/* LOGIN CARD */
+.login-box{
+  position:relative;
+  inset:0;
+  margin:auto;
+  width:320px;
+  height:auto;
+  background:white;
+  border-radius:20px;
+  text-align:center;
+  padding:20px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.1);
+}
+
+/* Close button */
+.close-btn{
+  float:right;
+  background:none;
+  border:none;
+  font-size:18px;
+  cursor:pointer;
+  color:#ff7b00;
+}
+
+/* Title */
+.login-title{
+  margin-top:10px;
+  font-size:20px;
+  font-weight:700;
+  color:#ff7b00;
+}
+
+/* Inputs */
+.login-input{
+  width:90%;
+  padding:12px;
+  border-radius:12px;
+  margin-top:12px;
+  border:1px solid #ddd;
+}
+
+/* Button */
+.login-btn{
+  width:90%;
+  margin-top:12px;
+  background:#ff7b00;
+  border:none;
+  padding:10px;
+  border-radius:12px;
+  color:white;
+  cursor:pointer;
+  font-size:14px;
+  transition:.18s;
+}
+.login-btn:hover{ transform:scale(1.02); }
+
+/* misc text */
+.login-sub{ color:#888;font-size:12px;margin-top:6px; }
+
+/* CATEGORY BAR */
+.category-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 12px;
+  padding: 10px 18px;
+  background: white;
+  margin-top: 8px;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 4px 15px rgba(255,120,0,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  backdrop-filter: blur(6px);
+}
+
+.category-bar .left-group{ display:flex; gap:10px; align-items:center; }
+.category-bar .right-group{ display:flex; gap:10px; align-items:center; }
+
+.cat {
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-weight: 600;
+  background: #fff7ee;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+  font-size: 13px;
+}
+
+.cat.active { background: var(--orange); color:#fff; transform:scale(1.05); box-shadow:0 6px 18px rgba(255,120,0,0.08); }
+.cat:hover { transform: scale(1.06); background:#ffc48a; color:#fff; }
+
+.cat-search { padding:8px 10px; border-radius:12px; border:1px solid #eee; width:180px; }
+
+/* pill styles */
+.pill-veg { background:#e6ffec; color:#059669; padding:4px 8px; border-radius:999px; font-weight:700; font-size:12px;}
+.pill-nv { background:#ffe9e1; color:#b91c1c; padding:4px 8px; border-radius:999px; font-weight:700; font-size:12px;}
+
+/* Admin specific tweaks */
+.admin-nav { background: transparent; border: none; cursor: pointer; transition: .12s; width:100%; text-align:left; }
+.admin-nav.active { background: rgba(255,123,0,0.12); color: var(--orange); font-weight:700; }
+.admin-view { padding: 6px; }
+
+/* Cart sidebar adjustments */
+#cartSidebar { right: -24rem; transition: right .35s ease; }
+#cartSidebar.open { right: 0; }
+
+/* =============================
+   ADMIN PANEL LAYOUT
+============================= */
+
+#adminPanel[data-modal-admin] { display:none; align-items:center; justify-content:center; }
+#adminPanel[data-modal-admin].open { display:flex; }
+
+#adminPanel .login-wrapper { width: 90vw; max-width:1200px; height:90vh; }
+#adminPanel .login-box { width:100%; height:100%; display:flex; overflow:hidden; padding:0; border-radius:18px; }
+#adminPanel .admin-sidebar { width:260px; background: #fff3e1; padding:20px; border-right:2px solid #ffd7ab; }
+#adminPanel .admin-content { flex:1; padding:20px; overflow-y:auto; }
+
+/* Responsive */
+@media (max-width:900px){
+  #bg-morph-wrapper{ display:none; }
+  .cat-search{ width:120px; }
+  .login-wrapper{ width:320px; }
+  .login-box{ width:300px; }
+  .menu-card .meta img{ width:48px; height:48px; }
+}
